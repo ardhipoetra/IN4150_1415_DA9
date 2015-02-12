@@ -5,8 +5,7 @@ import java.util.PriorityQueue;
 
 public interface DA9C_RMI extends Remote {
 	
-	
-	public int broadcast(Messages msg) throws RemoteException;
-	public void receive(Messages msg) throws RemoteException;
-	public void setProcessesNetwork(DA9C_RMI proc[]);
+	public int broadcast(Messages msg, DA9C_RMI[] proc) throws RemoteException;
+	public void receive(Messages msg, DA9C_RMI[] proc) throws RemoteException;
+//	public void setProcessesNetwork(Object proc[]);
 }

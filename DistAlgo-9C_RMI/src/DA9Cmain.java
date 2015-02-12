@@ -18,7 +18,7 @@ public class DA9Cmain {
 		DA9C_RMI proc[] = new DA9C_RMI[PROCESS_NUMBER];
 		for (int i = 0; i < PROCESS_NUMBER; i++) {
 			proc[i] = (DA9C_RMI) Naming.lookup("rmi://localhost/RD"+i);
-			proc[i].setProcessesNetwork(proc);
+//			proc[i].setProcessesNetwork(proc);
 		}
 		
 		
@@ -27,7 +27,7 @@ public class DA9Cmain {
 		testmsg.idSender = 0;
 		testmsg.timestamp = new Date().getTime();
 		
-		proc[0].broadcast(testmsg);
+		proc[0].broadcast(testmsg,proc);
 	}
 
 }

@@ -18,21 +18,22 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 		super();
 		this.id = id;
 		queue = new PriorityQueue<Messages>(10, new MsgComparator());
+		ackQueue = new ArrayList<Messages>();
 	}
 	
 
 	@Override
-	public int broadcast(Messages msg) throws RemoteException {
+	public int broadcast(Messages msg,DA9C_RMI[] proc) throws RemoteException {
 		System.out.println(id + "send : "+ msg);
 		for (DA9C_RMI da9c_RMI : proc) {
-			da9c_RMI.receive(msg);
+			da9c_RMI.receive(msg,proc);
 		}
 		return 0;
 	}
 
 
 	@Override
-	public void receive(Messages msg) throws RemoteException {
+	public void receive(Messages msg,DA9C_RMI[] proc) throws RemoteException {
 		if (msg.type == 0) { //message
 			queue.add(msg);
 			
@@ -40,10 +41,14 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 			ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
 			ack.type = 1;
 			
-			broadcast(ack);
+			broadcast(ack,proc);
 		} else if (msg.type == 1) { //ack
 			ackQueue.add(msg);
 			int count = 0;
+			
+			if (queue.size() == 0) {
+				return;
+			}
 			for (int i = 0; i < ackQueue.size(); i++) {
 				if (ackQueue.get(i).timestamp == queue.peek().timestamp) { //compare ack with head of queue
 					count++; 
@@ -81,9 +86,8 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 		
 	}
 
-	@Override
-	public void setProcessesNetwork(DA9C_RMI[] proc) {
-		this.proc = proc;
-	}
+//	public void setProcessesNetwork(Object[] proc) {
+//		this.proc = proc;
+//	}
 
 }

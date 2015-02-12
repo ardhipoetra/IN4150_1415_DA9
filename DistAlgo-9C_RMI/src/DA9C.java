@@ -1,6 +1,8 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 
 
@@ -8,6 +10,7 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 	private static final long serialVersionUID = 1L;
 	
 	PriorityQueue<Messages> queue;
+	ArrayList<Messages> ackQueue;
 	DA9C_RMI proc[];
 	int id;
 	
@@ -32,16 +35,35 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 	public void receive(Messages msg) throws RemoteException {
 		if (msg.type == 0) { //message
 			queue.add(msg);
-		} else if (msg.type == 1) { //ack
 			
+			Messages ack = new Messages();
+			ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
+			ack.type = 1;
+			
+			broadcast(ack);
+		} else if (msg.type == 1) { //ack
+			ackQueue.add(msg);
+			int count = 0;
+			for (int i = 0; i < ackQueue.size(); i++) {
+				if (ackQueue.get(i).timestamp == queue.peek().timestamp) { //compare ack with head of queue
+					count++; 
+				}
+			}
+			
+			if (count == proc.length) {
+				// msg is delivered
+				Messages m = queue.poll();
+				System.out.println(m+" is delivered");
+				
+				//remove acks from ackqueue
+				for (Iterator<Messages> iterator = ackQueue.iterator(); iterator.hasNext();) {
+					Messages gs = (Messages) iterator.next();
+					if (gs.timestamp == m.timestamp) {
+						iterator.remove();
+					}
+				}
+			}
 		}
-		
-		
-		Messages ack = new Messages();
-		ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
-		ack.type = 1;
-		
-		broadcast(ack);
 	}
 	
 	class MsgComparator implements Comparator<Messages> {

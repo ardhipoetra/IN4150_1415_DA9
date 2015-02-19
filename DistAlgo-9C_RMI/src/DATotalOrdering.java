@@ -117,6 +117,12 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 		
 		while(ackQ != ackQueue.size() && ackQueue.size() != 0) {
 			countFinal = 0;
+			try {
+				Thread.sleep((long)(Math.random() * 100));
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
 			System.out.println("q "+queue.size() + " ack : "+ackQueue.size());
 
 			ackQ = ackQueue.size();
@@ -163,13 +169,12 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 
 		@Override
 		public int compare(Messages o1, Messages o2) {
-			if (o1.timestamp == o2.timestamp && 
-					o1.idSender < o2.idSender) {
+			if (o1.timestamp == o2.timestamp) {
 				return o1.idSender - o2.idSender;
 			}
-			if (o1.timestamp < o2.timestamp) return -1;
-			
-			return 1;
+			return (int) (o1.timestamp - o2.timestamp);
+//			if (o1.timestamp < o2.timestamp) return -1;
+//			else return 1;
 		}
 		
 	}

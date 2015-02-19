@@ -1,11 +1,11 @@
 import java.rmi.Naming;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.util.Date;
 
 public class DATotalOrderingmain {
 
-	static final int PROCESS_NUMBER = 10;
+	static final int PROCESS_NUMBER = 3;
+	static final int MESSAGES_NUMBER = 2;
 	
 	public static void main(String[] args) throws Exception{
 		DATotalOrdering_RMI dai;
@@ -34,30 +34,31 @@ public class DATotalOrderingmain {
 		
 		for (int i = 0; i < PROCESS_NUMBER; i++) {
 			
-			final int count = i;
-			final DATotalOrdering_RMI daObj = proc[count];
-			Thread tr = new Thread("MAIN_"+count){
-				@Override
-				public void run() {
-					Messages testmsg = new Messages();
-					testmsg.msg = "The Message P"+count;
-					testmsg.idSender = count;
-					testmsg.timestamp = new Date().getTime();
-					
-					try {
-						daObj.broadcast(testmsg);
-					} catch (RemoteException e) {
-						e.printStackTrace();
+				final int countP = i;
+				final DATotalOrdering_RMI daObj = proc[countP];
+				Thread tr = new Thread("MAIN_"+countP){
+					@Override
+					public void run() {
+						for (int j = 0; j < MESSAGES_NUMBER; j++) {
+							
+							try {
+								Thread.sleep((long)(Math.random() * 500));
+								
+								Messages testmsg = new Messages();
+								testmsg.msg = "The Message P"+countP+"x"+j;
+								testmsg.idSender = countP;
+								testmsg.timestamp = new Date().getTime();
+								daObj.broadcast(testmsg);
+								
+								
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
 					}
-				}
-			};
-			
-			tr.start();
+				};
+				tr.start();
 		}
-		
-		
-		
-		
 	}
 
 }

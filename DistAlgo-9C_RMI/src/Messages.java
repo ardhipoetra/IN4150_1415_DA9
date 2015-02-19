@@ -20,4 +20,12 @@ public class Messages implements Serializable{
 		
 		return "{"+s+"}"+msg + " from Process "+idSender+" at ["+timestamp+"]";
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		Messages m = (Messages) obj;
+		if (timestamp == m.timestamp && msg.equals(m.msg)) return true;
+		
+		return false;
+	}
 }

@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class DATotalOrderingmain {
 
-	static final int PROCESS_NUMBER = 3;
+	static final int PROCESS_NUMBER = 10;
 	
 	public static void main(String[] args) throws Exception{
 		DATotalOrdering_RMI dai;
@@ -32,13 +32,32 @@ public class DATotalOrderingmain {
 			proc[i].setProcessesNetwork(proc);
 		}
 		
+		for (int i = 0; i < PROCESS_NUMBER; i++) {
+			
+			final int count = i;
+			final DATotalOrdering_RMI daObj = proc[count];
+			Thread tr = new Thread("MAIN_"+count){
+				@Override
+				public void run() {
+					Messages testmsg = new Messages();
+					testmsg.msg = "The Message P"+count;
+					testmsg.idSender = count;
+					testmsg.timestamp = new Date().getTime();
+					
+					try {
+						daObj.broadcast(testmsg);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			
+			tr.start();
+		}
 		
-		Messages testmsg = new Messages();
-		testmsg.msg = "msg";
-		testmsg.idSender = 0;
-		testmsg.timestamp = new Date().getTime();
 		
-		proc[0].broadcast(testmsg);
+		
+		
 	}
 
 }

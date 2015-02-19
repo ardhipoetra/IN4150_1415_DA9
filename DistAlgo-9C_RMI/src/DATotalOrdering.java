@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -14,22 +17,34 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 	ArrayList<Messages> ackQueue;
 	DATotalOrdering_RMI proc[];
 	int id;
+
+	private PrintWriter outSend, outRcvMsg, outRcvAck, outDlvrMsg;
 	
 	protected DATotalOrdering(int id) throws RemoteException {
 		super();
 		this.id = id;
 		queue = new PriorityQueue<Messages>(10, new MsgComparator());
 		ackQueue = new ArrayList<Messages>();
+		try {
+			outSend = new PrintWriter(new BufferedWriter(new FileWriter("send.txt", true)));
+			outRcvMsg = new PrintWriter(new BufferedWriter(new FileWriter("rcvMsg.txt", true)));
+			outRcvAck= new PrintWriter(new BufferedWriter(new FileWriter("rcvAck.txt", true)));
+			outDlvrMsg = new PrintWriter(new BufferedWriter(new FileWriter("dlvrMsg.txt", true)));
+			
+//			outSend = outRcvAck = outRcvMsg = outDlvrMsg = System.out;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 
 	@Override
 	public int broadcast(final Messages msg) throws RemoteException{
-		System.out.println("Process ["+id+"] SEND : "+ msg + " at "+(new Date().getTime() - msg.timestamp));
+		outSend.println("Process ["+id+"] SEND : "+ msg + " at "+(new Date().getTime() - msg.timestamp));
 		int i = 0;
 		
 		
-		for (final DATotalOrdering_RMI totOrd_I : proc) {//added it here as broadcast is same as send
+		for (final DATotalOrdering_RMI totOrd_I : proc) {
 			
 			Thread tr = new Thread("t_"+(i++)){
 				@Override
@@ -57,9 +72,8 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 	@Override
 	public void receive(Messages msg) throws RemoteException {
 		
-		System.out.println("Process ["+id+"]"+msg+" is RECEIVED at "+ (new Date().getTime() - msg.timestamp));
-		
 		if (msg.type == 0) { //message
+			outRcvMsg.println("Process ["+id+"]"+msg+" is RECEIVED at "+ (new Date().getTime() - msg.timestamp));
 			queue.add(msg); //put that into buffer
 			
 			Messages ack = new Messages();
@@ -68,15 +82,16 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 			
 			broadcast(ack); //broadcast ack
 		} else if (msg.type == 1) { //ack
+			outRcvAck.println("Process ["+id+"]"+msg+" is RECEIVED at "+ (new Date().getTime() - msg.timestamp));
 			ackQueue.add(msg);
 			int count = 0;
 			
-			if (queue.size() == 0) { //if msg not yet arrived, ignore ack for now
+			if (queue.size() == 0 && ackQueue.size() != 0) { //if msg not yet arrived, ignore ack for now
 				return;
 			}
 			
 			for (int i = 0; i < ackQueue.size(); i++) {
-				if (ackQueue.get(i).timestamp == queue.peek().timestamp) { //compare ack with head of queue
+				if (ackQueue.get(i).equals(queue.peek())) { //compare ack with head of queue
 					count++; 
 				}
 			}
@@ -84,16 +99,63 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 			if (count == proc.length) {
 				// msg is delivered
 				Messages m = queue.poll();
-				System.out.println("Process ["+id+"]"+m+" is DELIVERED at "+ (new Date().getTime() - m.timestamp));
+				outDlvrMsg.println("Process ["+id+"]"+m+" is DELIVERED at "+ (new Date().getTime() - m.timestamp));
 				
 				//remove acks from ackqueue
 				for (Iterator<Messages> iterator = ackQueue.iterator(); iterator.hasNext();) {
 					Messages gs = (Messages) iterator.next();
-					if (gs.timestamp == m.timestamp) {
+					if (gs.equals(m)) {
 						iterator.remove();
 					}
 				}
 			}
+		}
+		
+		//further check
+		int countFinal = 0;
+		int ackQ = 0;
+		
+		while(ackQ != ackQueue.size() && ackQueue.size() != 0) {
+			countFinal = 0;
+			System.out.println("q "+queue.size() + " ack : "+ackQueue.size());
+
+			ackQ = ackQueue.size();
+			for (int i = 0; i < ackQueue.size(); i++) {
+				if (ackQueue.get(i).equals(queue.peek())) { //compare ack with head of queue
+					countFinal++; 
+				}
+			}
+			
+			if (countFinal == proc.length) {
+				// msg is delivered
+				Messages m = queue.poll();
+				outDlvrMsg.println("Process ["+id+"]"+m+" is DELIVERED at "+ (new Date().getTime() - m.timestamp));
+				
+				//remove acks from ackqueue
+				for (Iterator<Messages> iterator = ackQueue.iterator(); iterator.hasNext();) {
+					Messages gs = (Messages) iterator.next();
+					if (gs.equals(m)) {
+						iterator.remove();
+					}
+				}
+			}
+			
+			System.out.println("aq' "+ackQ + " aq : "+ackQueue.size() + " m "+queue.peek());
+			
+			for (int i = 0; i < ackQueue.size(); i++) {
+				System.out.print(ackQueue.get(i)+",");
+			}
+		}
+		
+		
+		
+		if (queue.size() == 0 && ackQueue.size() == 0) { 
+			outDlvrMsg.close();
+			outRcvAck.close();
+			outSend.close();
+			outRcvMsg.close();
+			
+			System.out.println("FINISHED");
 		}
 	}
 	

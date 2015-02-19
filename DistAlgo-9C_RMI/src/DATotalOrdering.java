@@ -2,19 +2,20 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 
 
-public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
+public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrdering_RMI {
 	private static final long serialVersionUID = 1L;
 	
 	PriorityQueue<Messages> queue;
 	ArrayList<Messages> ackQueue;
-	DA9C_RMI proc[];
+	DATotalOrdering_RMI proc[];
 	int id;
 	
-	protected DA9C(int id) throws RemoteException {
+	protected DATotalOrdering(int id) throws RemoteException {
 		super();
 		this.id = id;
 		queue = new PriorityQueue<Messages>(10, new MsgComparator());
@@ -23,32 +24,40 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 	
 
 	@Override
-	public int broadcast(Messages msg,DA9C_RMI[] proc) throws RemoteException {
-		System.out.println(id + "send : "+ msg);
-		for (DA9C_RMI da9c_RMI : proc) {
-			da9c_RMI.receive(msg,proc);
+	public int broadcast(Messages msg, DATotalOrdering_RMI[] proc) throws RemoteException{
+		System.out.println(id + "send : "+ msg + " at "+new Date().getTime());
+		for (DATotalOrdering_RMI totOrd_I : proc) {//added it here as broadcast is same as send
+			
+			try {
+				Thread.sleep((long)(Math.random() * 500));
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} //random delay
+			
+			totOrd_I.receive(msg,proc);
 		}
 		return 0;
 	}
 
 
 	@Override
-	public void receive(Messages msg,DA9C_RMI[] proc) throws RemoteException {
+	public void receive(Messages msg, DATotalOrdering_RMI[] proc) throws RemoteException {
 		if (msg.type == 0) { //message
-			queue.add(msg);
+			queue.add(msg); //put that into buffer
 			
 			Messages ack = new Messages();
 			ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
 			ack.type = 1;
 			
-			broadcast(ack,proc);
+			broadcast(ack,proc); //broadcast ack
 		} else if (msg.type == 1) { //ack
 			ackQueue.add(msg);
 			int count = 0;
 			
-			if (queue.size() == 0) {
+			if (queue.size() == 0) { //if msg not yet arrived, ignore ack for now
 				return;
 			}
+			
 			for (int i = 0; i < ackQueue.size(); i++) {
 				if (ackQueue.get(i).timestamp == queue.peek().timestamp) { //compare ack with head of queue
 					count++; 
@@ -58,7 +67,7 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 			if (count == proc.length) {
 				// msg is delivered
 				Messages m = queue.poll();
-				System.out.println(m+" is delivered");
+				System.out.println(m+" is delivered at "+ new Date().getTime());
 				
 				//remove acks from ackqueue
 				for (Iterator<Messages> iterator = ackQueue.iterator(); iterator.hasNext();) {
@@ -85,6 +94,21 @@ public class DA9C extends UnicastRemoteObject implements DA9C_RMI {
 		}
 		
 	}
+
+//	@Override
+//	public void send(Messages msg, DATotalOrdering_RMI[] proc) throws RemoteException {
+//		if (msg.type == 0) { //message
+//			queue.add(msg);
+//			
+//			Messages ack = new Messages();
+//			ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
+//			ack.type = 1;
+//			
+//			broadcast(ack,proc);
+//		} else 
+//			
+//		
+//	}
 
 //	public void setProcessesNetwork(Object[] proc) {
 //		this.proc = proc;

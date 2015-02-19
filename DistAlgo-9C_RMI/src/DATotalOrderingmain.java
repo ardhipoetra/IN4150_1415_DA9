@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class DATotalOrderingmain {
 
-	static final int PROCESS_NUMBER = 5;
+	static final int PROCESS_NUMBER = 3;
 	
 	public static void main(String[] args) throws Exception{
 		DATotalOrdering_RMI dai;
@@ -26,16 +26,19 @@ public class DATotalOrderingmain {
 		DATotalOrdering_RMI proc[] = new DATotalOrdering_RMI[PROCESS_NUMBER];
 		for (int i = 0; i < PROCESS_NUMBER; i++) {
 			proc[i] = (DATotalOrdering_RMI) Naming.lookup("rmi://localhost/RD"+i);
-//			proc[i].setProcessesNetwork(proc);
+		}
+		
+		for (int i = 0; i < PROCESS_NUMBER; i++) {
+			proc[i].setProcessesNetwork(proc);
 		}
 		
 		
 		Messages testmsg = new Messages();
-		testmsg.msg = "something lalala";
+		testmsg.msg = "msg";
 		testmsg.idSender = 0;
 		testmsg.timestamp = new Date().getTime();
 		
-		proc[0].broadcast(testmsg,proc);
+		proc[0].broadcast(testmsg);
 	}
 
 }

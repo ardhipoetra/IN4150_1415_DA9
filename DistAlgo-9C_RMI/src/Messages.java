@@ -14,6 +14,10 @@ public class Messages implements Serializable{
 	
 	@Override
 	public String toString() {
-		return "["+type+"]"+msg + "("+idSender+") ["+timestamp+"]";
+		String s = "ACK";
+		if (type == 0) s = "MESSAGE";
+			
+		
+		return "{"+s+"}"+msg + " from Process "+idSender+" at ["+timestamp+"]";
 	}
 }

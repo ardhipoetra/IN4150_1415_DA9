@@ -24,32 +24,49 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 	
 
 	@Override
-	public int broadcast(Messages msg, DATotalOrdering_RMI[] proc) throws RemoteException{
-		System.out.println(id + "send : "+ msg + " at "+new Date().getTime());
-		for (DATotalOrdering_RMI totOrd_I : proc) {//added it here as broadcast is same as send
+	public int broadcast(final Messages msg) throws RemoteException{
+		System.out.println("Process ["+id+"] SEND : "+ msg + " at "+(new Date().getTime() - msg.timestamp));
+		int i = 0;
+		
+		
+		for (final DATotalOrdering_RMI totOrd_I : proc) {//added it here as broadcast is same as send
 			
-			try {
-				Thread.sleep((long)(Math.random() * 500));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} //random delay
+			Thread tr = new Thread("t_"+(i++)){
+				@Override
+				public void run() {
+					try {
+						//random delay
+						Thread.sleep((long)(Math.random() * 500));
+						
+						totOrd_I.receive(msg);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+				}
+			};
 			
-			totOrd_I.receive(msg,proc);
+			tr.start();
+			
 		}
 		return 0;
 	}
 
 
 	@Override
-	public void receive(Messages msg, DATotalOrdering_RMI[] proc) throws RemoteException {
+	public void receive(Messages msg) throws RemoteException {
+		
+		System.out.println("Process ["+id+"]"+msg+" is RECEIVED at "+ (new Date().getTime() - msg.timestamp));
+		
 		if (msg.type == 0) { //message
 			queue.add(msg); //put that into buffer
 			
 			Messages ack = new Messages();
-			ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
+			ack.idSender = id ; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
 			ack.type = 1;
 			
-			broadcast(ack,proc); //broadcast ack
+			broadcast(ack); //broadcast ack
 		} else if (msg.type == 1) { //ack
 			ackQueue.add(msg);
 			int count = 0;
@@ -67,7 +84,7 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 			if (count == proc.length) {
 				// msg is delivered
 				Messages m = queue.poll();
-				System.out.println(m+" is delivered at "+ new Date().getTime());
+				System.out.println("Process ["+id+"]"+m+" is DELIVERED at "+ (new Date().getTime() - m.timestamp));
 				
 				//remove acks from ackqueue
 				for (Iterator<Messages> iterator = ackQueue.iterator(); iterator.hasNext();) {
@@ -93,6 +110,11 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 			return 1;
 		}
 		
+	}
+
+	@Override
+	public void setProcessesNetwork(DATotalOrdering_RMI[] proc) throws RemoteException {
+		this.proc = proc;
 	}
 
 //	@Override

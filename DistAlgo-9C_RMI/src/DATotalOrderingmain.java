@@ -1,5 +1,5 @@
+import java.io.PrintWriter;
 import java.rmi.Naming;
-import java.rmi.RemoteException;
 import java.util.Date;
 
 public class DATotalOrderingmain {
@@ -18,6 +18,11 @@ public class DATotalOrderingmain {
 //			e.printStackTrace();
 //		}
 		
+		new PrintWriter("send.txt").close();
+		new PrintWriter("rcvMsg.txt").close();
+		new PrintWriter("rcvAck.txt").close();
+		new PrintWriter("dlvrMsg.txt").close();
+		
 		for (int i = 0; i < PROCESS_NUMBER; i++) {
 			cls = new DATotalOrdering(i);
 			Naming.rebind("rmi://localhost/RD"+i, cls);
@@ -28,8 +33,11 @@ public class DATotalOrderingmain {
 			proc[i] = (DATotalOrdering_RMI) Naming.lookup("rmi://localhost/RD"+i);
 		}
 		
+		long timeStart = new Date().getTime();
+		
 		for (int i = 0; i < PROCESS_NUMBER; i++) {
 			proc[i].setProcessesNetwork(proc);
+			proc[i].setStartTime(timeStart);
 		}
 		
 		for (int i = 0; i < PROCESS_NUMBER; i++) {

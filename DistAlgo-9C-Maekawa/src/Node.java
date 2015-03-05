@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -5,7 +6,8 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 
-public class Node implements I_Node{
+public class Node implements I_Node, Serializable{
+	private static final long serialVersionUID = -6280648254081711979L;
 
 	PriorityQueue<Message> queue;
 	
@@ -42,6 +44,7 @@ public class Node implements I_Node{
 	
 	@Override
 	public void receive(Message msg) throws RemoteException {
+		System.out.println(id+" receive : "+msg);
 		switch (msg.type) {
 		case Message.TYPE_REQUEST:
 			if (!granted) {
@@ -151,6 +154,7 @@ public class Node implements I_Node{
 
 	@Override	
 	public void send(Message msg, I_Node dest) throws RemoteException {
+		System.out.println(id+" send : "+msg);
 		if (msg.type == Message.TYPE_REQUEST) {
 			numberOfGranted = 0;
 			currentTargetCS = dest.getId();
@@ -172,7 +176,13 @@ public class Node implements I_Node{
 
 	@Override
 	public void enterCS() throws RemoteException {
-		// TODO Auto-generated method stub
+		try {
+			System.out.println(id+" entered CS at "+(new Date().getTime()));
+			Thread.sleep(1000);
+			System.out.println(id+" want out CS at "+(new Date().getTime()));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		
 	}
 

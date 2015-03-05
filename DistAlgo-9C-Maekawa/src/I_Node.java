@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Comparator;
@@ -15,7 +16,9 @@ public interface I_Node extends Remote{
 	public int getId() throws RemoteException;
 	
 
-	class MsgComparator implements Comparator<Message> {
+	class MsgComparator implements Comparator<Message>, Serializable{
+
+		private static final long serialVersionUID = -1982104430673196394L;
 
 		@Override
 		public int compare(Message o1, Message o2) {

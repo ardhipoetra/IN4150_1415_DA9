@@ -3,6 +3,7 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public class MaekawaMain {
@@ -59,6 +60,12 @@ public class MaekawaMain {
 			nodes[i].setHashMap(reqsets);
 		}
 		
+		Message s = new Message();
+		s.idSender = 0;
+		s.timestamp = new Date().getTime();
+		s.type = Message.TYPE_REQUEST;
+		
+		nodes[0].send(s, nodes[1]);
 		
 	}
 

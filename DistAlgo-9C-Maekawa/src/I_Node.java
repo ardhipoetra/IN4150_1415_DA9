@@ -11,7 +11,7 @@ public interface I_Node extends Remote{
 	public void send(Message msg, I_Node dest) throws RemoteException;
 	public void setHashMap(List<I_Node[]> proc) throws RemoteException;
 	public void setProcessNetwork(I_Node[] nodes) throws RemoteException;
-	public void enterCS() throws RemoteException;
+	public void enterCS(int callee) throws RemoteException;
 	
 	public int getId() throws RemoteException;
 	

@@ -13,6 +13,7 @@ public class Message implements Serializable{
 	
 	public int type;
 	public int idSender;
+	public int idDest;
 	public long timestamp;
 	
 	public Message() {
@@ -41,7 +42,7 @@ public class Message implements Serializable{
 		default:
 			break;
 		}
-		return ss+"["+idSender+"] "+timestamp;
+		return ss+"["+idSender+" -> "+idDest+"] "+timestamp;
 	}
 	
 	@Override

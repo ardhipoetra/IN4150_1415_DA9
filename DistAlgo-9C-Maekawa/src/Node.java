@@ -48,12 +48,15 @@ public class Node implements I_Node, Serializable{
 		switch (msg.type) {
 		case Message.TYPE_REQUEST:
 			if (!granted) {
+				granted = true;
+				
 				current_grant = msg;
 				Message mGrnt = new Message();
-				mGrnt.idSender = this.id; mGrnt.timestamp = new Date().getTime(); mGrnt.type = Message.TYPE_GRANT;
+				mGrnt.idSender = this.id; mGrnt.timestamp = new Date().getTime(); 
+				mGrnt.idDest = msg.idSender; mGrnt.type = Message.TYPE_GRANT;
 				send(mGrnt, nodes[msg.idSender]);
 				
-				granted = true;
+//				granted = true;
 			} else {
 				queue.add(msg);
 				
@@ -61,14 +64,16 @@ public class Node implements I_Node, Serializable{
 				
 				if (msgComp.compare(current_grant, msg) < 0 || msgComp.compare(head, msg) < 0) {
 					Message mPstpone = new Message();
-					mPstpone.idSender = this.id; mPstpone.timestamp = new Date().getTime(); mPstpone.type = Message.TYPE_POSTPONED;
+					mPstpone.idSender = this.id; mPstpone.timestamp = new Date().getTime(); 
+					mPstpone.idDest = msg.idSender; mPstpone.type = Message.TYPE_POSTPONED;
 					
 					send(mPstpone, nodes[msg.idSender]);
 				} else {
 					if (!inquiring) {
 						inquiring = true;
 						Message mInq = new Message();
-						mInq.idSender = this.id; mInq.timestamp = new Date().getTime(); mInq.type = Message.TYPE_INQUIRE;
+						mInq.idSender = this.id; mInq.timestamp = new Date().getTime(); 
+						mInq.idDest = current_grant.idSender; mInq.type = Message.TYPE_INQUIRE;
 						
 						send(mInq, nodes[current_grant.idSender]);
 					}
@@ -82,12 +87,14 @@ public class Node implements I_Node, Serializable{
 			if (numberOfGranted == reqlist.get(currentTargetCS).length) {
 				postponed = false;
 				
-				nodes[currentTargetCS].enterCS();
+				nodes[currentTargetCS].enterCS(id);
 				
 				for (I_Node i_dest: reqlist.get(currentTargetCS)) {
 					Message mRel = new Message();
-					mRel.idSender = this.id; mRel.timestamp = new Date().getTime(); mRel.type = Message.TYPE_RELEASE;
-					i_dest.send(mRel, i_dest);
+					mRel.idSender = this.id; mRel.timestamp = new Date().getTime(); 
+					mRel.idDest = i_dest.getId(); mRel.type = Message.TYPE_RELEASE;
+					
+					send(mRel, i_dest);
 				}
 			}
 			
@@ -100,9 +107,10 @@ public class Node implements I_Node, Serializable{
 				current_grant = queue.poll();
 				
 				Message mGrnt = new Message();
-				mGrnt.idSender = current_grant.idSender; mGrnt.timestamp = new Date().getTime(); mGrnt.type = Message.TYPE_GRANT;
+				mGrnt.idSender = this.id; mGrnt.timestamp = new Date().getTime(); 
+				mGrnt.idDest = current_grant.idSender; mGrnt.type = Message.TYPE_GRANT;
 				
-				send(mGrnt, nodes[mGrnt.idSender]);
+				send(mGrnt, nodes[mGrnt.idDest]);
 				granted = true;
 			}
 			break;
@@ -116,15 +124,19 @@ public class Node implements I_Node, Serializable{
 			inquiring = false;
 			granted = false;
 			
-			queue.add(current_grant);
-			current_grant = queue.poll();
+			if (current_grant != null) {
+				queue.add(current_grant);
+				current_grant = queue.poll();
+				
+				granted = true;
+				
+				Message mGrnt = new Message();
+				mGrnt.idSender = this.id; mGrnt.timestamp = new Date().getTime(); 
+				mGrnt.idDest = current_grant.idSender ;mGrnt.type = Message.TYPE_GRANT;
+				
+				send(mGrnt, nodes[mGrnt.idDest]);
+			}
 			
-			granted = true;
-			
-			Message mGrnt = new Message();
-			mGrnt.idSender = current_grant.idSender; mGrnt.timestamp = new Date().getTime(); mGrnt.type = Message.TYPE_GRANT;
-			
-			send(mGrnt, nodes[mGrnt.idSender]);
 			
 			break;
 		default: //ERROR
@@ -142,7 +154,8 @@ public class Node implements I_Node, Serializable{
 				if (postponed) {
 					numberOfGranted--;
 					Message mRelinquish = new Message();
-					mRelinquish.idSender = this.id; mRelinquish.timestamp = new Date().getTime(); mRelinquish.type = Message.TYPE_RELINQUISH;
+					mRelinquish.idSender = this.id; mRelinquish.timestamp = new Date().getTime(); 
+					mRelinquish.idDest = msg.idSender; mRelinquish.type = Message.TYPE_RELINQUISH;
 					
 					send(mRelinquish, nodes[msg.idSender]);
 				}
@@ -154,7 +167,13 @@ public class Node implements I_Node, Serializable{
 
 	@Override	
 	public void send(Message msg, I_Node dest) throws RemoteException {
-		System.out.println(id+" send : "+msg);
+		try {
+			Thread.sleep((long)(Math.random() * 300));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println(id+" send : "+msg+" to "+dest.getId());
 		if (msg.type == Message.TYPE_REQUEST) {
 			numberOfGranted = 0;
 			currentTargetCS = dest.getId();
@@ -175,11 +194,11 @@ public class Node implements I_Node, Serializable{
 
 
 	@Override
-	public void enterCS() throws RemoteException {
+	public void enterCS(int callee) throws RemoteException {
 		try {
-			System.out.println(id+" entered CS at "+(new Date().getTime()));
-			Thread.sleep(1000);
-			System.out.println(id+" want out CS at "+(new Date().getTime()));
+			System.out.println(callee+" entered CS "+id+" at "+(new Date().getTime()));
+			Thread.sleep(1500);
+			System.out.println(callee+" want out CS "+id+" at "+(new Date().getTime()));
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

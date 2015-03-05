@@ -11,6 +11,8 @@ public class MaekawaMain {
 	public static final int NODE = 3;
 	public static final int K = 2;
 	
+	static I_Node[] nodes;
+	
 	public static final int[][] REQ_S = 
 	{
 		{0,1},
@@ -22,6 +24,7 @@ public class MaekawaMain {
 	public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {
 		Node n;
 		ArrayList<I_Node[]> reqsets = new ArrayList<I_Node[]>();
+		nodes = new I_Node[NODE];
 		
 //		System.setSecurityManager(new RMISecurityManager());
 
@@ -37,7 +40,7 @@ public class MaekawaMain {
 			Naming.rebind("rmi://localhost/Mae"+i, n);
 		}
 		
-		I_Node[] nodes = new I_Node[NODE];
+		
 		
 		for (int i = 0; i < NODE; i++) {
 			nodes[i] = (I_Node) Naming.lookup("rmi://localhost/Mae"+i);
@@ -60,13 +63,29 @@ public class MaekawaMain {
 			nodes[i].setHashMap(reqsets);
 		}
 		
-		Message s = new Message();
-		s.idSender = 0;
-		s.timestamp = new Date().getTime();
-		s.type = Message.TYPE_REQUEST;
-		
-		nodes[0].send(s, nodes[1]);
-		
+		for (int i = 1; i <= 2; i++) {
+			final int countP = i;
+			Thread tr = new Thread("MAIN_"+countP){
+				@Override
+				public void run() {
+					try {
+						Thread.sleep((long)(Math.random() * 100));
+						
+						Message testmsg = new Message();
+						testmsg.idSender = countP;
+						testmsg.idDest = 0;
+						testmsg.timestamp = new Date().getTime();
+						testmsg.type = Message.TYPE_REQUEST;
+						
+						nodes[countP].send(testmsg, nodes[0]);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			
+			tr.start();
+		}
 	}
 
 }

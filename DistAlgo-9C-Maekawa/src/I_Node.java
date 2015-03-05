@@ -7,8 +7,12 @@ import java.util.List;
 
 public interface I_Node extends Remote{
 	public void receive(Message msg) throws RemoteException;
-	public void send(Message msg) throws RemoteException;
+	public void send(Message msg, I_Node dest) throws RemoteException;
 	public void setHashMap(List<I_Node[]> proc) throws RemoteException;
+	public void setProcessNetwork(I_Node[] nodes) throws RemoteException;
+	public void enterCS() throws RemoteException;
+	
+	public int getId() throws RemoteException;
 	
 
 	class MsgComparator implements Comparator<Message> {
@@ -19,8 +23,6 @@ public interface I_Node extends Remote{
 				return o1.idSender - o2.idSender;
 			}
 			return (int) (o1.timestamp - o2.timestamp);
-//			if (o1.timestamp < o2.timestamp) return -1;
-//			else return 1;
 		}
 		
 	}

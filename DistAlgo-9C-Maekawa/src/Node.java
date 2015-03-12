@@ -31,6 +31,8 @@ public class Node implements I_Node, Serializable{
 
 	private boolean waitinquire;
 
+	private Message msgInquire;
+
 	
 	
 	public Node(int id) {
@@ -82,8 +84,12 @@ public class Node implements I_Node, Serializable{
 			break;
 		case Message.TYPE_GRANT:
 			numberOfGranted++;
-			
 			if (numberOfGranted == reqlist.get(currentTargetCS).length) {
+				if (waitinquire) {
+					waitinquire = false;
+					msgInquire = null;
+				}
+				
 				postponed = false;
 				
 				nodes[currentTargetCS].enterCS(id);
@@ -115,6 +121,7 @@ public class Node implements I_Node, Serializable{
 			break;
 		case Message.TYPE_INQUIRE:
 			waitinquire = true;
+			msgInquire = msg;
 			break;
 		case Message.TYPE_POSTPONED:
 			postponed = true;
@@ -136,7 +143,6 @@ public class Node implements I_Node, Serializable{
 				send(mGrnt, nodes[mGrnt.idDest]);
 			}
 			
-			
 			break;
 		default: //ERROR
 			break;
@@ -154,10 +160,12 @@ public class Node implements I_Node, Serializable{
 					numberOfGranted--;
 					Message mRelinquish = new Message();
 					mRelinquish.idSender = this.id; mRelinquish.timestamp = new Date().getTime(); 
-					mRelinquish.idDest = msg.idSender; mRelinquish.type = Message.TYPE_RELINQUISH;
+					mRelinquish.idDest = msgInquire.idSender; mRelinquish.type = Message.TYPE_RELINQUISH;
 					
-					send(mRelinquish, nodes[msg.idSender]);
+					send(mRelinquish, nodes[msgInquire.idSender]);
 				}
+				waitinquire = false;
+				msgInquire = null;
 			}
 		}
 		
@@ -166,19 +174,26 @@ public class Node implements I_Node, Serializable{
 
 	@Override	
 	public void send(Message msg, I_Node dest) throws RemoteException {
+		try {
+			Thread.sleep(Math.round(Math.random() * 300));
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		
 		if (msg.type == Message.TYPE_REQUEST) {
 			numberOfGranted = 0;
 			currentTargetCS = dest.getId();
 			for (I_Node i_dest: reqlist.get(currentTargetCS)) {
 				System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId()+" - "+i_dest.getId());
+				
 				i_dest.receive(msg);
 			}
 		} else {
-			try {
-				Thread.sleep((long)(300));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				Thread.sleep((long)(300));
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
 			
 			System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId());
 			dest.receive(msg);
@@ -197,7 +212,7 @@ public class Node implements I_Node, Serializable{
 	public void enterCS(int callee) throws RemoteException {
 		try {
 			System.out.println(callee+" entered CS "+id+" at "+(new Date().getTime()));
-			Thread.sleep((long) Math.random() * 2000);
+			Thread.sleep(Math.round(Math.random() * 2000));
 			System.out.println(callee+" want out CS "+id+" at "+(new Date().getTime()));
 		} catch (InterruptedException e) {
 			e.printStackTrace();

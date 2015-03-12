@@ -23,6 +23,7 @@ public class Messages implements Serializable{
 	
 	@Override
 	public boolean equals(Object obj) {
+		if (obj == null) return false;
 		Messages m = (Messages) obj;
 		if (timestamp == m.timestamp && msg.equals(m.msg)) return true;
 		

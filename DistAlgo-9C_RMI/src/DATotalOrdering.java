@@ -49,10 +49,6 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 		// TODO: instead of using proc (array of object), retrieve again lookup
 		// but still need id 
 		
-		
-		
-		
-		
 		for (final DATotalOrdering_RMI totOrd_I : proc) {
 			
 			Thread tr = new Thread("t_"+(i++)){

@@ -16,17 +16,14 @@ public interface I_Node extends Remote{
 	public int getId() throws RemoteException;
 	
 
-	class MsgComparator implements Comparator<Message>, Serializable{
-
-		private static final long serialVersionUID = -1982104430673196394L;
-
-		@Override
-		public int compare(Message o1, Message o2) {
-			if (o1.timestamp == o2.timestamp) {
-				return o1.idSender - o2.idSender;
-			}
-			return (int) (o1.timestamp - o2.timestamp);
-		}
-		
-	}
+//	class MsgComparator implements Comparator<Message>, Serializable{
+//
+//		private static final long serialVersionUID = -1982104430673196394L;
+//
+//		@Override
+//		public int compare(Message o1, Message o2) {
+//			
+//		}
+//		
+//	}
 }

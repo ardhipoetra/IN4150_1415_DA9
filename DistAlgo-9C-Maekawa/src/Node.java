@@ -5,11 +5,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.PriorityQueue;
 
-
 public class Node implements I_Node, Serializable{
 	private static final long serialVersionUID = -6280648254081711979L;
 
-	PriorityQueue<Message> queue;
+	PriorityQueue<Message> queue; 
 	
 	I_Node nodes[];
 	ArrayList<I_Node[]> reqlist;
@@ -26,7 +25,7 @@ public class Node implements I_Node, Serializable{
 	
 	private int id;
 
-	private MsgComparator msgComp;
+//	private MsgComparator msgComp;
 
 	private int currentTargetCS;
 
@@ -35,16 +34,16 @@ public class Node implements I_Node, Serializable{
 	
 	
 	public Node(int id) {
-		queue = new PriorityQueue<Message>(10, msgComp);
+		queue = new PriorityQueue<Message>(10);
 		this.id = id;
 		
-		msgComp = new MsgComparator();
+//		msgComp = new MsgComparator();
 	}
 	
 	
 	@Override
 	public void receive(Message msg) throws RemoteException {
-		System.out.println(id+" receive : "+msg);
+		System.out.println("["+new Date().getTime()+"]"+id+" receive : "+msg);
 		switch (msg.type) {
 		case Message.TYPE_REQUEST:
 			if (!granted) {
@@ -62,7 +61,7 @@ public class Node implements I_Node, Serializable{
 				
 				Message head = queue.peek();
 				
-				if (msgComp.compare(current_grant, msg) < 0 || msgComp.compare(head, msg) < 0) {
+				if ((current_grant.compareTo(msg) < 0) || (head.compareTo(msg) < 0)) {
 					Message mPstpone = new Message();
 					mPstpone.idSender = this.id; mPstpone.timestamp = new Date().getTime(); 
 					mPstpone.idDest = msg.idSender; mPstpone.type = Message.TYPE_POSTPONED;
@@ -167,20 +166,21 @@ public class Node implements I_Node, Serializable{
 
 	@Override	
 	public void send(Message msg, I_Node dest) throws RemoteException {
-		try {
-			Thread.sleep((long)(Math.random() * 300));
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		
-		System.out.println(id+" send : "+msg+" to "+dest.getId());
 		if (msg.type == Message.TYPE_REQUEST) {
 			numberOfGranted = 0;
 			currentTargetCS = dest.getId();
 			for (I_Node i_dest: reqlist.get(currentTargetCS)) {
+				System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId()+" - "+i_dest.getId());
 				i_dest.receive(msg);
 			}
 		} else {
+			try {
+				Thread.sleep((long)(300));
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId());
 			dest.receive(msg);
 		}
 		

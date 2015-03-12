@@ -1,7 +1,7 @@
 import java.io.Serializable;
 
 
-public class Message implements Serializable{
+public class Message implements Serializable, Comparable<Message>{
 	
 	private static final long serialVersionUID = -9158610547120610162L;
 	public static final int TYPE_REQUEST = 1;
@@ -48,5 +48,13 @@ public class Message implements Serializable{
 	@Override
 	public boolean equals(Object obj) {
 		return true;
+	}
+
+	@Override
+	public int compareTo(Message o2) {
+		if (this.timestamp == o2.timestamp) {
+			return this.idSender - o2.idSender;
+		}
+		return (int) (this.timestamp - o2.timestamp);
 	}
 }

@@ -69,7 +69,7 @@ public class MaekawaMain {
 				@Override
 				public void run() {
 					try {
-						Thread.sleep((long)(Math.random() * 100));
+						Thread.sleep((long)(Math.random() * 200));
 						
 						Message testmsg = new Message();
 						testmsg.idSender = countP;

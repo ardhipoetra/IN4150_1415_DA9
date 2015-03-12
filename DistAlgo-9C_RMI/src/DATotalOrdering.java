@@ -28,10 +28,10 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 		queue = new PriorityQueue<Messages>(10, new MsgComparator());
 		ackQueue = new ArrayList<Messages>();
 		try {
-			outSend = new PrintWriter(new BufferedWriter(new FileWriter("send.txt", true)));
-			outRcvMsg = new PrintWriter(new BufferedWriter(new FileWriter("rcvMsg.txt", true)));
-			outRcvAck= new PrintWriter(new BufferedWriter(new FileWriter("rcvAck.txt", true)));
-			outDlvrMsg = new PrintWriter(new BufferedWriter(new FileWriter("dlvrMsg.txt", true)));
+			outSend = new PrintWriter(new BufferedWriter(new FileWriter("send-"+id+".txt", true)));
+			outRcvMsg = new PrintWriter(new BufferedWriter(new FileWriter("rcvMsg-"+id+".txt", true)));
+			outRcvAck= new PrintWriter(new BufferedWriter(new FileWriter("rcvAck-"+id+".txt", true)));
+			outDlvrMsg = new PrintWriter(new BufferedWriter(new FileWriter("dlvrMsg-"+id+".txt", true)));
 			
 //			outSend = outRcvAck = outRcvMsg = outDlvrMsg = System.out;
 		} catch (Exception e) {
@@ -45,6 +45,12 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 		
 		outSend.println("Process ["+id+"] SEND : "+ msg + " at "+(new Date().getTime() - timeStart));
 		int i = 0;
+		
+		// TODO: instead of using proc (array of object), retrieve again lookup
+		// but still need id 
+		
+		
+		
 		
 		
 		for (final DATotalOrdering_RMI totOrd_I : proc) {
@@ -201,24 +207,4 @@ public class DATotalOrdering extends UnicastRemoteObject implements DATotalOrder
 		timeStart = t;
 		
 	}
-
-//	@Override
-//	public void send(Messages msg, DATotalOrdering_RMI[] proc) throws RemoteException {
-//		if (msg.type == 0) { //message
-//			queue.add(msg);
-//			
-//			Messages ack = new Messages();
-//			ack.idSender = msg.idSender; ack.msg = msg.msg; ack.timestamp = msg.timestamp;
-//			ack.type = 1;
-//			
-//			broadcast(ack,proc);
-//		} else 
-//			
-//		
-//	}
-
-//	public void setProcessesNetwork(Object[] proc) {
-//		this.proc = proc;
-//	}
-
 }

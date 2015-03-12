@@ -197,11 +197,13 @@ public class Node implements I_Node, Serializable{
 	public void enterCS(int callee) throws RemoteException {
 		try {
 			System.out.println(callee+" entered CS "+id+" at "+(new Date().getTime()));
-			Thread.sleep(1500);
+			Thread.sleep((long) Math.random() * 2000);
 			System.out.println(callee+" want out CS "+id+" at "+(new Date().getTime()));
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		
+		// try another request
 		
 	}
 

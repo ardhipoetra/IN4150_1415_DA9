@@ -8,27 +8,27 @@ import java.util.Date;
 
 public class MaekawaMain {
 	
-	public static final int NODE = 7;
-	public static final int K = 3;
+	public static final int NODE = 3;
+	public static final int K = 2; // size of request set
 	
 	static I_Node[] nodes;
 	
 	public static final int[][] REQ_S = 
-//	{
-//		{0,1},
-//		{1,2},
-//		{0,2}
-//	};
-			
 	{
-		{0,1,2},
-		{1,4,6},
-		{2,3,4},
-		{0,3,6},
-		{0,4,5},
-		{1,3,5},
-		{2,5,6}	
+		{0,1},
+		{1,2},
+		{0,2}
 	};
+			
+//	{
+//		{0,1,2},
+//		{1,4,6},
+//		{2,3,4},
+//		{0,3,6},
+//		{0,4,5},
+//		{1,3,5},
+//		{2,5,6}	
+//	};
 	
 
 	public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {
@@ -140,28 +140,31 @@ public class MaekawaMain {
 		
 		
 		
-		for (int i = 1; i < NODE; i++) {
+		for (int i = 0; i < NODE; i++) {
 			final int countP = i;
-			Thread tr = new Thread("MAIN_"+countP){
-				@Override
-				public void run() {
-					try {
-						Thread.sleep(Math.round(Math.random() * 300));
-						
-						Message testmsg = new Message();
-						testmsg.idSender = countP;
-						testmsg.idDest = 0;
-						testmsg.timestamp = new Date().getTime();
-						testmsg.type = Message.TYPE_REQUEST;
-						
-						nodes[countP].send(testmsg, nodes[0]);
-					} catch (Exception e) {
-						e.printStackTrace();
+			for (int j = 0; j < REQ_S[countP].length ; j++) {
+				final int countJ = j;
+				Thread tr = new Thread("MAIN_"+countP){
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(Math.round(Math.random() * 300));
+							
+							Message testmsg = new Message();
+							testmsg.idSender = countP;
+							testmsg.idDest = REQ_S[countP][countJ];
+							testmsg.timestamp = new Date().getTime();
+							testmsg.type = Message.TYPE_REQUEST;
+							
+							nodes[countP].send(testmsg, nodes[testmsg.idDest]);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 					}
-				}
-			};
+				};
+				tr.start();
+			}
 			
-			tr.start();
 		}
 	}
 

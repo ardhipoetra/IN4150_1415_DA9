@@ -27,8 +27,6 @@ public class Node implements I_Node, Serializable{
 
 //	private MsgComparator msgComp;
 
-	private int currentTargetCS;
-
 	private boolean waitinquire;
 
 	private Message msgInquire;
@@ -40,6 +38,7 @@ public class Node implements I_Node, Serializable{
 		this.id = id;
 		
 //		msgComp = new MsgComparator();
+		numberOfGranted = 0;
 	}
 	
 	
@@ -84,7 +83,8 @@ public class Node implements I_Node, Serializable{
 			break;
 		case Message.TYPE_GRANT:
 			numberOfGranted++;
-			if (numberOfGranted == reqlist.get(currentTargetCS).length) {
+//			System.out.println("granted : "+numberOfGranted);
+			if (numberOfGranted == reqlist.get(id).length) {
 				if (waitinquire) {
 					waitinquire = false;
 					msgInquire = null;
@@ -92,9 +92,10 @@ public class Node implements I_Node, Serializable{
 				
 				postponed = false;
 				
-				nodes[currentTargetCS].enterCS(id);
+//				nodes[currentTargetCS].enterCS(id);
+				this.enterCS();
 				
-				for (I_Node i_dest: reqlist.get(currentTargetCS)) {
+				for (I_Node i_dest: reqlist.get(id)) {
 					Message mRel = new Message();
 					mRel.idSender = this.id; mRel.timestamp = new Date().getTime(); 
 					mRel.idDest = i_dest.getId(); mRel.type = Message.TYPE_RELEASE;
@@ -155,7 +156,7 @@ public class Node implements I_Node, Serializable{
 		if (wait) return;
 		
 		if (waitinquire) {
-			if (postponed || numberOfGranted == reqlist.get(currentTargetCS).length) {
+			if (postponed || numberOfGranted == reqlist.get(id).length) {
 				if (postponed) {
 					numberOfGranted--;
 					Message mRelinquish = new Message();
@@ -180,24 +181,17 @@ public class Node implements I_Node, Serializable{
 			e1.printStackTrace();
 		}
 		
+		System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId());
+		
 		if (msg.type == Message.TYPE_REQUEST) {
-			numberOfGranted = 0;
-			currentTargetCS = dest.getId();
-			for (I_Node i_dest: reqlist.get(currentTargetCS)) {
-				System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId()+" - "+i_dest.getId());
-				
-				i_dest.receive(msg);
-			}
-		} else {
-//			try {
-//				Thread.sleep((long)(300));
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
+//			for (I_Node i_dest: reqlist.get(currentTargetCS)) {
+//				System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId()+" - "+i_dest.getId());
+//				
+//				i_dest.receive(msg);
 //			}
-			
-			System.out.println("["+new Date().getTime()+"]"+id+" send : "+msg+" to "+dest.getId());
-			dest.receive(msg);
-		}
+		} 
+		dest.receive(msg);
+		
 		
 	}
 
@@ -209,11 +203,11 @@ public class Node implements I_Node, Serializable{
 
 
 	@Override
-	public void enterCS(int callee) throws RemoteException {
+	public void enterCS() throws RemoteException {
 		try {
-			System.out.println(callee+" entered CS "+id+" at "+(new Date().getTime()));
+			System.out.println(id+" entered CS at "+(new Date().getTime()));
 			Thread.sleep(Math.round(Math.random() * 2000));
-			System.out.println(callee+" want out CS "+id+" at "+(new Date().getTime()));
+			System.out.println(id+" want out CS at "+(new Date().getTime()));
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

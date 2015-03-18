@@ -2,8 +2,10 @@ import java.io.Serializable;
 
 
 public class Message implements Serializable, Comparable<Message>{
-	
-	private static final long serialVersionUID = -9158610547120610162L;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6974203889493409480L;
 	public static final int TYPE_REQUEST = 1;
 	public static final int TYPE_GRANT = 2;
 	public static final int TYPE_RELEASE = 3;

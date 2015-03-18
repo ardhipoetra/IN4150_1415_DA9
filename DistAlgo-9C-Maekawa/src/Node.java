@@ -3,52 +3,62 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Node implements I_Node, Serializable{
-	private static final long serialVersionUID = -6280648254081711979L;
 
-	PriorityQueue<Message> queue; 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3208829885919992960L;
+
+	Queue<Message> queue; 
 	
 	I_Node nodes[];
 	ArrayList<I_Node[]> reqlist;
-	
-	boolean granted;
 	Message current_grant;
 	
-	int numberOfGranted;
-		
-	boolean postponed;
-	
-	boolean wait;
-	boolean inquiring;
-	
+	AtomicBoolean granted = new AtomicBoolean();
+	AtomicInteger numberOfGranted = new AtomicInteger(0);
+	AtomicBoolean postponed = new AtomicBoolean();
+	AtomicBoolean wait = new AtomicBoolean();
+	AtomicBoolean inquiring = new AtomicBoolean();
+	AtomicInteger inquireTarget = new AtomicInteger();
+	AtomicBoolean waitinquire = new AtomicBoolean(false);
 	private int id;
 
 //	private MsgComparator msgComp;
 
-	private boolean waitinquire;
+//	private boolean waitinquire;
 
-	private Message msgInquire;
+//	private Message msgInquire;
 
-	
-	
 	public Node(int id) {
-		queue = new PriorityQueue<Message>(10);
+		queue = new PriorityBlockingQueue<Message>(10);
 		this.id = id;
 		
 //		msgComp = new MsgComparator();
-		numberOfGranted = 0;
+		numberOfGranted.set(0);
 	}
 	
 	
 	@Override
 	public void receive(Message msg) throws RemoteException {
 		System.out.println("["+new Date().getTime()+"]"+id+" receive : "+msg);
+		
+		try {
+			Thread.sleep(20);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		
 		switch (msg.type) {
 		case Message.TYPE_REQUEST:
-			if (!granted) {
-				granted = true;
+			if (!granted.get()) {
+				granted.set(true);
 				
 				current_grant = msg;
 				Message mGrnt = new Message();
@@ -69,8 +79,8 @@ public class Node implements I_Node, Serializable{
 					
 					send(mPstpone, nodes[msg.idSender]);
 				} else {
-					if (!inquiring) {
-						inquiring = true;
+					if (!inquiring.get()) {
+						inquiring.set(true);
 						Message mInq = new Message();
 						mInq.idSender = this.id; mInq.timestamp = new Date().getTime(); 
 						mInq.idDest = current_grant.idSender; mInq.type = Message.TYPE_INQUIRE;
@@ -82,15 +92,15 @@ public class Node implements I_Node, Serializable{
 			}
 			break;
 		case Message.TYPE_GRANT:
-			numberOfGranted++;
-//			System.out.println("granted : "+numberOfGranted);
-			if (numberOfGranted == reqlist.get(id).length) {
-				if (waitinquire) {
-					waitinquire = false;
-					msgInquire = null;
+			int tmpGrant = numberOfGranted.incrementAndGet();
+			System.out.println(id+" granted : "+numberOfGranted);
+			if (tmpGrant == reqlist.get(id).length) {
+				if (waitinquire.get()) {
+					waitinquire.set(false);
+					inquireTarget.set(-1);
 				}
 				
-				postponed = false;
+				postponed.set(false);
 				
 //				nodes[currentTargetCS].enterCS(id);
 				this.enterCS();
@@ -106,8 +116,8 @@ public class Node implements I_Node, Serializable{
 			
 			break;
 		case Message.TYPE_RELEASE:
-			granted = false;
-			inquiring = false;
+			granted.set(false);
+			inquiring.set(false);
 			
 			if (queue.size() != 0) {
 				current_grant = queue.poll();
@@ -117,25 +127,25 @@ public class Node implements I_Node, Serializable{
 				mGrnt.idDest = current_grant.idSender; mGrnt.type = Message.TYPE_GRANT;
 				
 				send(mGrnt, nodes[mGrnt.idDest]);
-				granted = true;
+				granted.set(false);
 			}
 			break;
 		case Message.TYPE_INQUIRE:
-			waitinquire = true;
-			msgInquire = msg;
+			waitinquire.set(true);
+			inquireTarget.set(msg.idSender);
 			break;
 		case Message.TYPE_POSTPONED:
-			postponed = true;
+			postponed.set(true);
 			break;
 		case Message.TYPE_RELINQUISH:
-			inquiring = false;
-			granted = false;
+			inquiring.set(false);
+			granted.set(false);
 			
 			if (current_grant != null) {
 				queue.add(current_grant);
 				current_grant = queue.poll();
 				
-				granted = true;
+				granted.set(false);
 				
 				Message mGrnt = new Message();
 				mGrnt.idSender = this.id; mGrnt.timestamp = new Date().getTime(); 
@@ -153,20 +163,22 @@ public class Node implements I_Node, Serializable{
 	}
 	
 	private void checkIfWait(Message msg) throws RemoteException {
-		if (wait) return;
+		if (wait.get()) return;
 		
-		if (waitinquire) {
-			if (postponed || numberOfGranted == reqlist.get(id).length) {
-				if (postponed) {
-					numberOfGranted--;
+		if (waitinquire.get()) {
+			if (postponed.get() || numberOfGranted.get() == reqlist.get(id).length) {
+				System.out.println(id+" INQUIRED OUT");
+				if (postponed.get()) {
+					System.out.println(id+" INQUIRED - POSTPONE");
+					numberOfGranted.decrementAndGet();
 					Message mRelinquish = new Message();
 					mRelinquish.idSender = this.id; mRelinquish.timestamp = new Date().getTime(); 
-					mRelinquish.idDest = msgInquire.idSender; mRelinquish.type = Message.TYPE_RELINQUISH;
+					mRelinquish.idDest = inquireTarget.get(); mRelinquish.type = Message.TYPE_RELINQUISH;
 					
-					send(mRelinquish, nodes[msgInquire.idSender]);
+					send(mRelinquish, nodes[mRelinquish.idDest]);
 				}
-				waitinquire = false;
-				msgInquire = null;
+				waitinquire.set(false);
+				inquireTarget.set(-1);
 			}
 		}
 		
@@ -176,7 +188,7 @@ public class Node implements I_Node, Serializable{
 	@Override	
 	public void send(Message msg, I_Node dest) throws RemoteException {
 		try {
-			Thread.sleep(Math.round(Math.random() * 300));
+			Thread.sleep(Math.round(Math.random() * 1000));
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}

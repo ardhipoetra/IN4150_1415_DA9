@@ -110,6 +110,7 @@ public class Node implements I_Node, Serializable{
 					mRel.idSender = this.id; mRel.timestamp = new Date().getTime(); 
 					mRel.idDest = i_dest.getId(); mRel.type = Message.TYPE_RELEASE;
 					
+					numberOfGranted.decrementAndGet();
 					send(mRel, i_dest);
 				}
 			}
@@ -168,6 +169,10 @@ public class Node implements I_Node, Serializable{
 		if (waitinquire.get()) {
 			if (postponed.get() || numberOfGranted.get() == reqlist.get(id).length) {
 				System.out.println(id+" INQUIRED OUT");
+				
+				waitinquire.set(false);
+				
+				
 				if (postponed.get()) {
 					System.out.println(id+" INQUIRED - POSTPONE");
 					numberOfGranted.decrementAndGet();
@@ -177,8 +182,9 @@ public class Node implements I_Node, Serializable{
 					
 					send(mRelinquish, nodes[mRelinquish.idDest]);
 				}
-				waitinquire.set(false);
+				
 				inquireTarget.set(-1);
+				
 			}
 		}
 		

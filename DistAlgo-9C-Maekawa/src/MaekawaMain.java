@@ -30,6 +30,7 @@ public class MaekawaMain {
 		{2,5,6}	
 	};
 	
+	static Thread[][] tr_1 = new Thread[NODE][REQ_S[0].length];
 
 	public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException, InterruptedException {
 		Node n;
@@ -72,9 +73,47 @@ public class MaekawaMain {
 			nodes[i].setHashMap(reqsets);
 		}
 		
+		
 		for (int i = 3; i < NODE; i++) {
 			final int countP = i;
 			Thread.sleep(Math.round(Math.random() * 300));
+			final long timestamp = new Date().getTime();
+			for (int j = 0; j < REQ_S[countP].length ; j++) {
+				final int countJ = j;
+				tr_1[countP][countJ] = new Thread("MAIN_"+countP){
+					@Override
+					public void run() {
+						try {
+							Message testmsg = new Message();
+							testmsg.idSender = countP;
+							testmsg.idDest = REQ_S[countP][countJ];
+							testmsg.timestamp = timestamp;
+							testmsg.type = Message.TYPE_REQUEST;
+							
+							nodes[countP].send(testmsg, nodes[testmsg.idDest]);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				};
+				tr_1[countP][countJ].start();
+			}
+		}
+		
+		for (int i = 0; i < tr_1.length; i++) {
+			for (int j = 0; j < tr_1[i].length; j++) {
+				try {
+					tr_1[i][j].join();
+				} catch(NullPointerException ne){}
+				
+			}
+		}
+		System.out.println("all finish, try 2nd round");
+		
+		
+		for (int i = 2; i < NODE - 1; i++) {
+			final int countP = i;
+			Thread.sleep(Math.round(Math.random() * 1000));
 			final long timestamp = new Date().getTime();
 			for (int j = 0; j < REQ_S[countP].length ; j++) {
 				final int countJ = j;
@@ -96,8 +135,6 @@ public class MaekawaMain {
 				};
 				tr.start();
 			}
-			
 		}
 	}
-
 }

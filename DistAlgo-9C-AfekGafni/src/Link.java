@@ -21,4 +21,13 @@ public class Link implements Serializable, Comparable<Link>{
 		if(this.pointMe == o.pointMe) return pointTarget - o.pointTarget;
 		else return this.pointMe - o.pointMe;
 	}
+	
+	public Link switchPerspective() {
+		return new Link(pointTarget, pointMe);
+	}
+	
+	@Override
+	public String toString() {
+		return "<"+pointMe+","+pointTarget+">";
+	}
 }

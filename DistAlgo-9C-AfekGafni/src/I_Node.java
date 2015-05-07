@@ -7,4 +7,7 @@ import java.rmi.RemoteException;
 public interface I_Node extends Remote{
 	public void send(Link link, int level, int fromId) throws RemoteException, MalformedURLException, NotBoundException;
 	public void receive(Link link, int level, int fromId) throws RemoteException, MalformedURLException, NotBoundException;
+	public int getid() throws RemoteException;
+	
+	public int dummy() throws RemoteException;
 }

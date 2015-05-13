@@ -24,24 +24,10 @@ public class OrdinaryProcess extends UnicastRemoteObject implements I_Node, Seri
 		this.owner = null;
 		this.potentialOwner = null;
 		
-//		for (int i = 0; i < Main.NODES; i++) {
-//			try {
-//				runOP();
-//			} catch (RemoteException e) {
-//				e.printStackTrace();
-//			}
-//		}
 		Naming.rebind("rmi://localhost/AfganOP"+id, this);
 		System.out.println(TAG+"OP "+this+" created");
 	}
 	
-	// don't need runOP because OP is not active
-//	private void runOP() throws RemoteException{
-//		while(true) {
-//                // here i should call receive function but i was not sure how i can get the level, id , and link from the sending process
-//		}
-//	}
-
 	@Override
 	public void send(Link link, int level, int fromId) throws RemoteException,
 			MalformedURLException, NotBoundException {
@@ -50,9 +36,6 @@ public class OrdinaryProcess extends UnicastRemoteObject implements I_Node, Seri
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		
-		// don't just copy paste
-//		I_Node node = (I_Node) Naming.lookup("rmi://localhost/AfganOP"+link.pointTarget);
 		
 		System.out.println(TAG+"OP "+this+" send ("+level+","+fromId+") to CP "+link.pointTarget);
 		// OP always send to CP
@@ -64,8 +47,6 @@ public class OrdinaryProcess extends UnicastRemoteObject implements I_Node, Seri
 	@Override
 	public void receive(Link link, int level, int fromId)
 			throws RemoteException, MalformedURLException, NotBoundException {
-		// same reason
-//        I_Node nodeFrom = (I_Node) Naming.lookup("rmi://localhost/AfganOP"+link.pointMe);
 		
 		I_Node nodeFrom = (I_Node) Naming.lookup("rmi://localhost/AfganCP"+link.pointMe);
         
@@ -75,8 +56,6 @@ public class OrdinaryProcess extends UnicastRemoteObject implements I_Node, Seri
         	System.out.println(TAG+" me larger, ignored");
         }
         else if ( !(isLargerTo(level,fromId)) ) {
-        	
-//        	potentialOwner.id = fromId;//not sure for ( potential_owner <- link' )
         	potentialOwner = (I_Node) nodeFrom;
         	
         	this.level.set(level);
